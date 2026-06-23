@@ -24,35 +24,34 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/jivdb
-      - SPRING_DATASOURCE_USERNAME=jiv
-      - SPRING_DATASOURCE_PASSWORD=jivpassword
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/jivdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=Root
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker for sandbox
       - agent-jar:/agent:ro
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
       - jiv-net
 
-  # ── PostgreSQL ───────────────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
+  # ── MySQL ────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
     environment:
-      POSTGRES_DB: jivdb
-      POSTGRES_USER: jiv
-      POSTGRES_PASSWORD: jivpassword
+      MYSQL_DATABASE: jivdb
+      MYSQL_ROOT_PASSWORD: Root
     ports:
-      - "5432:5432"
+      - "3307:3306"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U jiv -d jivdb"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -74,7 +73,7 @@ services:
       - jiv-net
 
 volumes:
-  postgres-data:
+  mysql-data:
   agent-jar:
 
 networks:
